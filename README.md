@@ -11,3 +11,9 @@ Para documentação temos um Drawio, um figma e o Postman na raiz do projeto
 O projeto teste tem os teste integrados da services
 O projeto Load tem o Nbomber para teste de carga 
 
+Proximos passos do projeto -
+
+Inserir Threads para melhorar performance
+Terminar Docker compose para implementação do sistema todo por containers
+ 
+
