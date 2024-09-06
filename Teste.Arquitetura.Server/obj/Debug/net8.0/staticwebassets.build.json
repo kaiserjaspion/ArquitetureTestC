@@ -1,0 +1,23 @@
+{
+  "Version": 1,
+  "Hash": "TpAeizXVGxwGCx/PEmnnEJbC5EVlDgH3vEJbwEXMuc0=",
+  "Source": "Teste.Arquitetura.Server",
+  "BasePath": "_content/Teste.Arquitetura.Server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "D:\\ProjetosTeste\\teste Arquitetura\\Teste.Arquitetura\\teste.arquitetura.client\\teste.arquitetura.client.esproj",
+      "Version": 2,
+      "Source": "teste.arquitetura.client",
+      "GetPublishAssetsTargets": "GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

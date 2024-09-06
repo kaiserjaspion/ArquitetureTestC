@@ -1,0 +1,26 @@
+version: '3.8'
+
+volumes:
+  sqlserver_data:
+
+services:
+  teste.arquitetura.server:
+    image: ${DOCKER_REGISTRY-}testearquiteturaserver
+    build:
+      context: .
+      dockerfile: Teste.Arquitetura.Server/Dockerfile
+      
+  # teste.arquitetura.client:
+  #   image: ${DOCKER_REGISTRY-}testearquiteturaclient
+  #   build:
+  #     context: .
+  #     dockerfile: teste.arquitetura.client/Dockerfile
+  
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "-password123"
+    ports:
+      - "1433:1433"
+    # command: sh -c 'chmod +x ./init.sh; ./init.sh & /opt/mssql/bin/sqlserver'

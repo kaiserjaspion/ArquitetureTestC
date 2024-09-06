@@ -1,0 +1,11 @@
+2024-09-04 18:10:23.286 -03:00 [INF] [ThreadId:1] NBomber 5.7.0 started a new session: 2024-09-04_21.10.94_session_2d8cc0e9
+2024-09-04 18:10:23.494 -03:00 [INF] [ThreadId:1] NBomber started as single node
+2024-09-04 18:10:23.516 -03:00 [INF] [ThreadId:1] License validation....
+2024-09-04 18:10:23.520 -03:00 [WRN] [ThreadId:1] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.
+2024-09-04 18:10:24.129 -03:00 [INF] [ThreadId:1] Reports folder: D:\ProjetosTeste\teste Arquitetura\Teste.Arquitetura\Teste.Arquitetura.Load\bin\Debug\net8.0\reports\2024-09-04_21.10.94_session_2d8cc0e9
+2024-09-04 18:10:24.140 -03:00 [INF] [ThreadId:1] Plugins: no plugins were loaded
+2024-09-04 18:10:24.143 -03:00 [INF] [ThreadId:1] Reporting sinks: no reporting sinks were loaded
+2024-09-04 18:10:24.144 -03:00 [INF] [ThreadId:1] Starting init...
+2024-09-04 18:10:24.177 -03:00 [INF] [ThreadId:1] Target scenarios: Report Scenario, Inject Scenario
+2024-09-04 18:10:24.193 -03:00 [INF] [ThreadId:1] Init finished
+2024-09-04 18:10:26.388 -03:00 [INF] [ThreadId:1] Starting bombing...

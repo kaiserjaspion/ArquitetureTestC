@@ -1,0 +1,97 @@
+{
+	"info": {
+		"_postman_id": "449c4b2e-a1b3-4b9e-8bfb-8367884675eb",
+		"name": "Teste Arquitetura",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34381815"
+	},
+	"item": [
+		{
+			"name": "Get Report Data",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:32770/CashFlow/2024-05-09",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "32770",
+					"path": [
+						"CashFlow",
+						"2024-05-09"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send CashFlow Transation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"dtChanged\": \"2024-09-05T16:11:01.743Z\",\r\n  \"isActive\": true,\r\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\r\n  \"value\": 0,\r\n  \"cpf\": \"string\",\r\n  \"date\": \"2024-09-05T16:11:01.743Z\",\r\n  \"itens\": [\r\n    {\r\n      \"dtChanged\": \"2024-09-05T16:11:01.743Z\",\r\n      \"isActive\": true,\r\n      \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\r\n      \"price\": 0,\r\n      \"name\": \"string\",\r\n      \"quantity\": 0,\r\n      \"cashFlowId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:32770/CashFlow",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "32770",
+					"path": [
+						"CashFlow"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send CashFlow Transation Manually",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"dtChanged\": \"2024-09-05T16:11:01.743Z\",\r\n  \"isActive\": true,\r\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\r\n  \"value\": 0,\r\n  \"cpf\": \"string\",\r\n  \"date\": \"2024-09-05T16:11:01.743Z\",\r\n  \"itens\": [\r\n    {\r\n      \"dtChanged\": \"2024-09-05T16:11:01.743Z\",\r\n      \"isActive\": true,\r\n      \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\r\n      \"price\": 0,\r\n      \"name\": \"string\",\r\n      \"quantity\": 0,\r\n      \"cashFlowId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:32770/CashFlow/Manually",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "32770",
+					"path": [
+						"CashFlow",
+						"Manually"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

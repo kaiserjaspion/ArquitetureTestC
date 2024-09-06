@@ -1,0 +1,5962 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/PragmaticFlow/NBomber@assets/v5.0/assets/theme.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+
+    <title>NBomber</title>
+
+    <!-- Global View -->
+    <script type="text/x-template" id="global-view">
+
+        <div class="row">
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <load-test-info :test-info="testInfo"></load-test-info>
+            </div>
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <chart-latency-indicators title="Global latency indicators" :scenario-stats="scenarioStats"></chart-latency-indicators>
+            </div>
+
+        </div>
+
+        <div class="mb-9 card">
+            <ul class="nav nav-line-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#scenario-stats-table" role="tab" aria-selected="true">Summary</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#nb-config" role="tab" aria-selected="true">NBomber Config</a>
+                </li>
+            </ul>
+            <!-- Tab content -->
+            <div class="tab-content p-4">
+                <div class="tab-pane fade show active" id="scenario-stats-table" role="tabpanel">
+
+                    <scenario-stats-table :is-ok="true" :scenario-stats="scenarioStats"></scenario-stats-table>
+
+                </div>
+                <div class="tab-pane fade" id="nb-config" role="tabpanel">
+
+                    <prism-json :jsonBody="nbConfig"></prism-json>
+
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <!-- Cluster View -->
+    <script type="text/x-template" id="cluster-view">
+
+        <div class="row">
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <load-test-info :test-info="testInfo"></load-test-info>
+            </div>
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <node-info :node-info="nodeInfo"></node-info>
+            </div>
+
+        </div>
+
+        <div class="mb-9 card">
+            <ul class="nav nav-line-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#cluster-nodes" role="tab" aria-selected="true">Cluster Nodes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#nb-config" role="tab">NBomber Config</a>
+                </li>
+            </ul>
+            <!-- Tab content -->
+            <div class="tab-content p-4">
+
+                <div class="tab-pane fade show active" id="cluster-nodes" role="tabpanel">
+                    <cluster-nodes-table :nodes="clusterNodes"></cluster-nodes-table>
+                </div>
+
+                <div class="tab-pane fade" id="nb-config" role="tabpanel">
+                    <prism-json :jsonBody="nbConfig"></prism-json>
+                </div>
+
+            </div>
+        </div>
+    </script>
+
+    <!-- Scenario View -->
+    <script type="text/x-template" id="scenario-view">
+
+        <div class="row">
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <load-test-info :test-info="testInfo"></load-test-info>
+            </div>
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <chart-latency-indicators title="Scenario latency indicators" :scenario-stats="scenarioStats"></chart-latency-indicators>
+            </div>
+
+        </div>
+
+        <div class="mb-9 card">
+            <ul class="nav nav-line-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#scenario-stats-table" role="tab" aria-selected="true">Summary</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#scenario-charts" role="tab" aria-selected="false">Charts</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#scenario-failures" role="tab" aria-selected="false">Failures</a>
+                </li>
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content p-4">
+                <div class="tab-pane fade show active" id="scenario-stats-table" role="tabpanel">
+
+                    <template v-if="scenarioStats[0].Ok.StatusCodes.length > 0 || scenarioStats[0].Fail.StatusCodes.length > 0">
+                        <scenario-status-code-table :scenario-stats="scenarioStats[0]"></scenario-status-code-table>
+                    </template>
+
+                    <scenario-stats-table :is-ok="true" :scenario-stats="scenarioStats"></scenario-stats-table>
+
+                </div>
+                <div class="tab-pane fade" id="scenario-charts" role="tabpanel">
+
+                    <div class="row">
+                        <div class="col-12 mb-5">
+
+                            <scenario-charts-view :steps-stats-history="stepsStatsHistory"></scenario-charts-view>
+
+                        </div>
+                    </div>
+
+                </div>
+                <div class="tab-pane fade" id="scenario-failures" role="tabpanel">
+
+                    <div class="row">
+                        <div class="col-12 mb-5">
+
+                            <scenario-stats-table :is-ok="false" :scenario-stats="scenarioStats"></scenario-stats-table>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <!-- Scenario Charts View -->
+    <script type="text/x-template" id="scenario-charts-view">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <div class="row">
+                    <div class="col-2">
+                        <div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+
+                            <a v-for="(stData, index) in stepsStatsHistory" class="nav-link" :class="{ active: index === 0 }" data-bs-toggle="pill" :href="'#st' + index" role="tab" aria-selected="true">
+                                {{ stData[0].Step.StepName }}
+                            </a>
+
+                        </div>
+                    </div>
+                    <div class="col-10">
+                        <div class="tab-content">
+                            <div v-for="(stData, index) in stepsStatsHistory"
+                                 class="tab-pane fade" :class="{ active: index === 0, show: index === 0 }" :id="'st' + index" role="tabpanel">
+
+                                <chart-scenario-throughput :step-time-line="stData"></chart-scenario-throughput>
+                                <chart-scenario-latency :step-time-line="stData"></chart-scenario-latency>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </script>
+
+    <!-- Hints View -->
+    <script type="text/x-template" id="hints-view">
+
+        <div class="row">
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <load-test-info :test-info="testInfo"></load-test-info>
+            </div>
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <chart-latency-indicators title="Global latency indicators" :scenario-stats="scenarioStats"></chart-latency-indicators>
+            </div>
+
+        </div>
+
+        <div class="mb-9 card">
+            <ul class="nav nav-line-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#hints-table" role="tab" aria-selected="true">Hints</a>
+                </li>
+            </ul>
+            <!-- Tab content -->
+            <div class="tab-content p-4">
+                <div class="tab-pane fade show active" id="hints-table" role="tabpanel">
+
+                    <template v-if="hints.length > 0">
+                        <hints-table :hints="hints"></hints-table>
+                    </template>
+                    <template v-else>
+                        <h5 class="text-muted text-uppercase fw-semi-bold">No Data</h5>
+                    </template>
+
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <!-- Plugins View -->
+    <script type="text/x-template" id="plugins-view">
+
+        <div class="row">
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <load-test-info :test-info="testInfo"></load-test-info>
+            </div>
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <node-info :node-info="nodeInfo"></node-info>
+            </div>
+
+        </div>
+
+        <div class="mb-9 card">
+            <ul class="nav nav-line-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#plugins-stats" role="tab" aria-selected="true">Plugins Data</a>
+                </li>
+            </ul>
+            <!-- Tab content -->
+            <div class="tab-content p-4">
+                <div class="tab-pane fade show active" id="plugins-stats" role="tabpanel">
+
+                    <template v-if="plugins.length > 0">
+                        <template v-for="plugin in plugins">
+                            <template v-for="table in plugin">
+
+                                <plugin-stats-table :data="table"></plugin-stats-table>
+
+                            </template>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <h5 class="text-muted text-uppercase fw-semi-bold">No Data</h5>
+                    </template>
+
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <!-- Metrics View -->
+    <script type="text/x-template" id="metrics-view">
+
+        <div class="row">
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <load-test-info :test-info="testInfo"></load-test-info>
+            </div>
+
+            <div class="col-xxl-6 col-12 mb-5">
+                <node-info :node-info="nodeInfo"></node-info>
+            </div>
+
+        </div>
+
+        <div class="mb-9 card">
+            <ul class="nav nav-line-bottom" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#metrics-charts" role="tab" aria-selected="true">Metrics</a>
+                </li>
+            </ul>
+            <!-- Tab content -->
+            <div class="tab-content p-4">
+                <div class="tab-pane fade show active" id="metrics-charts" role="tabpanel">
+
+                    <template v-if="metrics.length > 0">
+                        <div class="row">
+                            <template v-for="m in metrics">
+
+                                <chart-metric :metric="m"></chart-metric>
+
+                            </template>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <h5 class="text-muted text-uppercase fw-semi-bold">No Data</h5>
+                    </template>
+
+                </div>
+            </div>
+        </div>
+    </script>
+
+</head>
+<body id="app" class="bg-light">
+    <div id="db-wrapper">
+        <!-- Sidebar -->
+        <nav class="navbar-vertical navbar">
+            <div class="nav-scroller">
+
+                <!-- Brand logo -->
+                <a class="navbar-brand" href="https://nbomber.com/" target="_blank">
+                    <img src="https://raw.githubusercontent.com/PragmaticFlow/NBomber/assets/v5.0/assets/nbomber_logo.png" alt="NBomber" />
+                </a>
+
+                <!-- Navbar nav -->
+                <ul class="navbar-nav flex-column" id="sideNavbar">
+
+                    <li class="nav-item">
+                        <div class="navbar-heading">version {{ currentNodeInfo.NBomberVersion }}</div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: currentView === 'global-view' }"
+                           @click="loadView('global-view')" href="#">
+                            <i data-feather="home" class="nav-icon icon-xs me-2"></i> Global Info
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: currentView === 'cluster-view' }"
+                           @click="loadView('cluster-view')" href="#">
+                            <i data-feather="codepen" class="nav-icon icon-xs me-2"></i> Cluster Info
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link has-arrow" href="#!" data-bs-toggle="collapse" data-bs-target="#navScenarios"
+                           aria-expanded="true">
+                            <i data-feather="layers" class="nav-icon icon-xs me-2"></i> Scenarios
+                        </a>
+
+                        <div id="navScenarios" class="collapse hidden" data-bs-parent="#sideNavbar">
+                            <ul class="nav flex-column">
+                                <li v-for="(scn, index) in viewModel.FinalStats.ScenarioStats" class="nav-item">
+
+                                    <a class="nav-link "
+                                       :class="{ active: currentView === 'scenario-view' && currentScenarioName === scn.ScenarioName }"
+                                       @click="loadView('scenario-view', scn.ScenarioName)" href="#">{{ scn.ScenarioName }}</a>
+
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: currentView === 'hints-view' }"
+                           @click="loadView('hints-view')" href="#">
+                            <i data-feather="book-open" class="nav-icon icon-xs me-2"></i> Hints
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: currentView === 'plugins-view' }"
+                           @click="loadView('plugins-view')" href="#">
+                            <i data-feather="hexagon" class="nav-icon icon-xs me-2"></i> Plugins
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: currentView === 'metrics-view' }"
+                           @click="loadView('metrics-view')" href="#">
+                            <i data-feather="bar-chart-2" class="nav-icon icon-xs me-2"></i> .NET Process Metrics
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+        </nav>
+
+        <!-- Page content -->
+        <div id="page-content">
+            <div class="header @@classList">
+
+                <div class="bg-info pt-10 pb-20"></div>
+
+                <div class="container-fluid mt-n22 px-6">
+
+                    <component :is="currentView" v-bind="currentProperties" :key="currentScenarioName"></component>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Libs JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-slimscroll@1.3.8/jquery.slimscroll.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.0/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.40.0/dist/apexcharts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+
+    <!-- Theme JS -->
+    <script src="https://cdn.jsdelivr.net/gh/PragmaticFlow/NBomber@assets/v5.0/assets/theme.js"></script>
+
+    <!-- App JS -->
+    <script>
+const viewModel = {
+  "FinalStats": {
+    "ScenarioStats": [
+      {
+        "ScenarioName": "Report Scenario",
+        "Ok": {
+          "Request": {
+            "Count": 0,
+            "RPS": 0,
+            "Percent": 0
+          },
+          "Latency": {
+            "MinMs": 0,
+            "MeanMs": 0,
+            "MaxMs": 0,
+            "Percent50": 0,
+            "Percent75": 0,
+            "Percent95": 0,
+            "Percent99": 0,
+            "StdDev": 0,
+            "LatencyCount": {
+              "LessOrEq800": 0,
+              "More800Less1200": 0,
+              "MoreOrEq1200": 0
+            }
+          },
+          "DataTransfer": {
+            "MinBytes": 0,
+            "MeanBytes": 0,
+            "MaxBytes": 0,
+            "Percent50": 0,
+            "Percent75": 0,
+            "Percent95": 0,
+            "Percent99": 0,
+            "StdDev": 0,
+            "AllBytes": 0
+          },
+          "StatusCodes": []
+        },
+        "Fail": {
+          "Request": {
+            "Count": 3000,
+            "RPS": 50,
+            "Percent": 100
+          },
+          "Latency": {
+            "MinMs": 3.19,
+            "MeanMs": 1216.47,
+            "MaxMs": 28339,
+            "Percent50": 44.54,
+            "Percent75": 243.33,
+            "Percent95": 8658.94,
+            "Percent99": 26918.91,
+            "StdDev": 4304.32,
+            "LatencyCount": {
+              "LessOrEq800": 2558,
+              "More800Less1200": 164,
+              "MoreOrEq1200": 278
+            }
+          },
+          "DataTransfer": {
+            "MinBytes": 0,
+            "MeanBytes": 0,
+            "MaxBytes": 0,
+            "Percent50": 0,
+            "Percent75": 0,
+            "Percent95": 0,
+            "Percent99": 0,
+            "StdDev": 0,
+            "AllBytes": 0
+          },
+          "StatusCodes": [
+            {
+              "StatusCode": "-101",
+              "IsError": true,
+              "Message": "The SSL connection could not be established, see inner exception.",
+              "Count": 10,
+              "Percent": 100
+            }
+          ]
+        },
+        "StepStats": [
+          {
+            "StepName": "global information",
+            "Ok": {
+              "Request": {
+                "Count": 0,
+                "RPS": 0,
+                "Percent": 0
+              },
+              "Latency": {
+                "MinMs": 0,
+                "MeanMs": 0,
+                "MaxMs": 0,
+                "Percent50": 0,
+                "Percent75": 0,
+                "Percent95": 0,
+                "Percent99": 0,
+                "StdDev": 0,
+                "LatencyCount": {
+                  "LessOrEq800": 0,
+                  "More800Less1200": 0,
+                  "MoreOrEq1200": 0
+                }
+              },
+              "DataTransfer": {
+                "MinBytes": 0,
+                "MeanBytes": 0,
+                "MaxBytes": 0,
+                "Percent50": 0,
+                "Percent75": 0,
+                "Percent95": 0,
+                "Percent99": 0,
+                "StdDev": 0,
+                "AllBytes": 0
+              },
+              "StatusCodes": []
+            },
+            "Fail": {
+              "Request": {
+                "Count": 3000,
+                "RPS": 50,
+                "Percent": 100
+              },
+              "Latency": {
+                "MinMs": 3.19,
+                "MeanMs": 1216.47,
+                "MaxMs": 28339,
+                "Percent50": 44.54,
+                "Percent75": 243.33,
+                "Percent95": 8658.94,
+                "Percent99": 26918.91,
+                "StdDev": 4304.32,
+                "LatencyCount": {
+                  "LessOrEq800": 2558,
+                  "More800Less1200": 164,
+                  "MoreOrEq1200": 278
+                }
+              },
+              "DataTransfer": {
+                "MinBytes": 0,
+                "MeanBytes": 0,
+                "MaxBytes": 0,
+                "Percent50": 0,
+                "Percent75": 0,
+                "Percent95": 0,
+                "Percent99": 0,
+                "StdDev": 0,
+                "AllBytes": 0
+              },
+              "StatusCodes": [
+                {
+                  "StatusCode": "-101",
+                  "IsError": true,
+                  "Message": "The SSL connection could not be established, see inner exception.",
+                  "Count": 10,
+                  "Percent": 100
+                }
+              ]
+            }
+          }
+        ],
+        "LoadSimulationStats": {
+          "SimulationName": "inject",
+          "Value": 50
+        },
+        "CurrentOperation": "Complete",
+        "AllRequestCount": 3000,
+        "AllOkCount": 0,
+        "AllFailCount": 3000,
+        "AllBytes": 0,
+        "Duration": "00:01:00"
+      },
+      {
+        "ScenarioName": "Inject Scenario",
+        "Ok": {
+          "Request": {
+            "Count": 0,
+            "RPS": 0,
+            "Percent": 0
+          },
+          "Latency": {
+            "MinMs": 0,
+            "MeanMs": 0,
+            "MaxMs": 0,
+            "Percent50": 0,
+            "Percent75": 0,
+            "Percent95": 0,
+            "Percent99": 0,
+            "StdDev": 0,
+            "LatencyCount": {
+              "LessOrEq800": 0,
+              "More800Less1200": 0,
+              "MoreOrEq1200": 0
+            }
+          },
+          "DataTransfer": {
+            "MinBytes": 0,
+            "MeanBytes": 0,
+            "MaxBytes": 0,
+            "Percent50": 0,
+            "Percent75": 0,
+            "Percent95": 0,
+            "Percent99": 0,
+            "StdDev": 0,
+            "AllBytes": 0
+          },
+          "StatusCodes": []
+        },
+        "Fail": {
+          "Request": {
+            "Count": 3000,
+            "RPS": 50,
+            "Percent": 100
+          },
+          "Latency": {
+            "MinMs": 3.81,
+            "MeanMs": 1507.63,
+            "MaxMs": 29857.14,
+            "Percent50": 52.26,
+            "Percent75": 353.28,
+            "Percent95": 9797.63,
+            "Percent99": 26935.3,
+            "StdDev": 4675.09,
+            "LatencyCount": {
+              "LessOrEq800": 2461,
+              "More800Less1200": 164,
+              "MoreOrEq1200": 375
+            }
+          },
+          "DataTransfer": {
+            "MinBytes": 0,
+            "MeanBytes": 0,
+            "MaxBytes": 0,
+            "Percent50": 0,
+            "Percent75": 0,
+            "Percent95": 0,
+            "Percent99": 0,
+            "StdDev": 0,
+            "AllBytes": 0
+          },
+          "StatusCodes": []
+        },
+        "StepStats": [
+          {
+            "StepName": "global information",
+            "Ok": {
+              "Request": {
+                "Count": 0,
+                "RPS": 0,
+                "Percent": 0
+              },
+              "Latency": {
+                "MinMs": 0,
+                "MeanMs": 0,
+                "MaxMs": 0,
+                "Percent50": 0,
+                "Percent75": 0,
+                "Percent95": 0,
+                "Percent99": 0,
+                "StdDev": 0,
+                "LatencyCount": {
+                  "LessOrEq800": 0,
+                  "More800Less1200": 0,
+                  "MoreOrEq1200": 0
+                }
+              },
+              "DataTransfer": {
+                "MinBytes": 0,
+                "MeanBytes": 0,
+                "MaxBytes": 0,
+                "Percent50": 0,
+                "Percent75": 0,
+                "Percent95": 0,
+                "Percent99": 0,
+                "StdDev": 0,
+                "AllBytes": 0
+              },
+              "StatusCodes": []
+            },
+            "Fail": {
+              "Request": {
+                "Count": 3000,
+                "RPS": 50,
+                "Percent": 100
+              },
+              "Latency": {
+                "MinMs": 3.81,
+                "MeanMs": 1507.63,
+                "MaxMs": 29857.14,
+                "Percent50": 52.26,
+                "Percent75": 353.28,
+                "Percent95": 9797.63,
+                "Percent99": 26935.3,
+                "StdDev": 4675.09,
+                "LatencyCount": {
+                  "LessOrEq800": 2461,
+                  "More800Less1200": 164,
+                  "MoreOrEq1200": 375
+                }
+              },
+              "DataTransfer": {
+                "MinBytes": 0,
+                "MeanBytes": 0,
+                "MaxBytes": 0,
+                "Percent50": 0,
+                "Percent75": 0,
+                "Percent95": 0,
+                "Percent99": 0,
+                "StdDev": 0,
+                "AllBytes": 0
+              },
+              "StatusCodes": []
+            }
+          }
+        ],
+        "LoadSimulationStats": {
+          "SimulationName": "inject",
+          "Value": 50
+        },
+        "CurrentOperation": "Complete",
+        "AllRequestCount": 3000,
+        "AllOkCount": 0,
+        "AllFailCount": 3000,
+        "AllBytes": 0,
+        "Duration": "00:01:00"
+      }
+    ],
+    "PluginStats": [],
+    "NodeInfo": {
+      "MachineName": "DAILEON",
+      "NodeType": "SingleNode",
+      "CurrentOperation": "Complete",
+      "OS": "Microsoft Windows NT 10.0.22631.0",
+      "DotNetVersion": ".NETCoreApp,Version=v8.0",
+      "Processor": "AMD64 Family 23 Model 24 Stepping 1, AuthenticAMD",
+      "CoresCount": 8,
+      "NBomberVersion": "5.7.0"
+    },
+    "TestInfo": {
+      "SessionId": "2024-09-04_21.11.82_session_40c5b0f3",
+      "TestSuite": "nbomber_default_test_suite_name",
+      "TestName": "nbomber_default_test_name",
+      "ClusterId": "",
+      "Created": "2024-09-04T21:11:08.7684068Z"
+    },
+    "ReportFiles": [],
+    "AllRequestCount": 6000,
+    "AllOkCount": 0,
+    "AllFailCount": 6000,
+    "AllBytes": 0,
+    "Duration": "00:01:00"
+  },
+  "TimeLineHistory": [
+    {
+      "Timestamp": "00:00:05",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 11,
+              "RPS": 2.2,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 16097.51,
+              "MeanMs": 17031.54,
+              "MaxMs": 17789.29,
+              "Percent50": 17104.9,
+              "Percent75": 17268.74,
+              "Percent95": 17694.72,
+              "Percent99": 17793.02,
+              "StdDev": 507.79,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 11
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": [
+              {
+                "StatusCode": "-101",
+                "IsError": true,
+                "Message": "The SSL connection could not be established, see inner exception.",
+                "Count": 10,
+                "Percent": 100
+              }
+            ]
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 11,
+                  "RPS": 2.2,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 16097.51,
+                  "MeanMs": 17031.54,
+                  "MaxMs": 17789.29,
+                  "Percent50": 17104.9,
+                  "Percent75": 17268.74,
+                  "Percent95": 17694.72,
+                  "Percent99": 17793.02,
+                  "StdDev": 507.79,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 11
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": [
+                  {
+                    "StatusCode": "-101",
+                    "IsError": true,
+                    "Message": "The SSL connection could not be established, see inner exception.",
+                    "Count": 10,
+                    "Percent": 100
+                  }
+                ]
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 11,
+          "AllOkCount": 0,
+          "AllFailCount": 11,
+          "AllBytes": 0,
+          "Duration": "00:00:05"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 0,
+          "AllOkCount": 0,
+          "AllFailCount": 0,
+          "AllBytes": 0,
+          "Duration": "00:00:05"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:10",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 0,
+          "AllOkCount": 0,
+          "AllFailCount": 0,
+          "AllBytes": 0,
+          "Duration": "00:00:10"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 15,
+              "RPS": 3,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 23879.95,
+              "MeanMs": 25195.86,
+              "MaxMs": 27525.32,
+              "Percent50": 24707.07,
+              "Percent75": 25722.88,
+              "Percent95": 26312.7,
+              "Percent99": 27541.5,
+              "StdDev": 991.1,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 15
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 15,
+                  "RPS": 3,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 23879.95,
+                  "MeanMs": 25195.86,
+                  "MaxMs": 27525.32,
+                  "Percent50": 24707.07,
+                  "Percent75": 25722.88,
+                  "Percent95": 26312.7,
+                  "Percent99": 27541.5,
+                  "StdDev": 991.1,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 15
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 15,
+          "AllOkCount": 0,
+          "AllFailCount": 15,
+          "AllBytes": 0,
+          "Duration": "00:00:10"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:15",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 196,
+              "RPS": 39.2,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 168.28,
+              "MeanMs": 12077.16,
+              "MaxMs": 28339,
+              "Percent50": 9814.02,
+              "Percent75": 10330.11,
+              "Percent95": 27590.66,
+              "Percent99": 27983.87,
+              "StdDev": 8177.81,
+              "LatencyCount": {
+                "LessOrEq800": 7,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 189
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 196,
+                  "RPS": 39.2,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 168.28,
+                  "MeanMs": 12077.16,
+                  "MaxMs": 28339,
+                  "Percent50": 9814.02,
+                  "Percent75": 10330.11,
+                  "Percent95": 27590.66,
+                  "Percent99": 27983.87,
+                  "StdDev": 8177.81,
+                  "LatencyCount": {
+                    "LessOrEq800": 7,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 189
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 196,
+          "AllOkCount": 0,
+          "AllFailCount": 196,
+          "AllBytes": 0,
+          "Duration": "00:00:15"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 277,
+              "RPS": 55.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 157.08,
+              "MeanMs": 11863.39,
+              "MaxMs": 29857.14,
+              "Percent50": 9207.81,
+              "Percent75": 12394.5,
+              "Percent95": 27705.34,
+              "Percent99": 28180.48,
+              "StdDev": 8207.16,
+              "LatencyCount": {
+                "LessOrEq800": 19,
+                "More800Less1200": 2,
+                "MoreOrEq1200": 256
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 277,
+                  "RPS": 55.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 157.08,
+                  "MeanMs": 11863.39,
+                  "MaxMs": 29857.14,
+                  "Percent50": 9207.81,
+                  "Percent75": 12394.5,
+                  "Percent95": 27705.34,
+                  "Percent99": 28180.48,
+                  "StdDev": 8207.16,
+                  "LatencyCount": {
+                    "LessOrEq800": 19,
+                    "More800Less1200": 2,
+                    "MoreOrEq1200": 256
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 277,
+          "AllOkCount": 0,
+          "AllFailCount": 277,
+          "AllBytes": 0,
+          "Duration": "00:00:15"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:20",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 117,
+              "RPS": 23.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 41.95,
+              "MeanMs": 790.32,
+              "MaxMs": 20117.37,
+              "Percent50": 549.38,
+              "Percent75": 710.66,
+              "Percent95": 1564.67,
+              "Percent99": 1691.65,
+              "StdDev": 1829.68,
+              "LatencyCount": {
+                "LessOrEq800": 96,
+                "More800Less1200": 10,
+                "MoreOrEq1200": 11
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 117,
+                  "RPS": 23.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 41.95,
+                  "MeanMs": 790.32,
+                  "MaxMs": 20117.37,
+                  "Percent50": 549.38,
+                  "Percent75": 710.66,
+                  "Percent95": 1564.67,
+                  "Percent99": 1691.65,
+                  "StdDev": 1829.68,
+                  "LatencyCount": {
+                    "LessOrEq800": 96,
+                    "More800Less1200": 10,
+                    "MoreOrEq1200": 11
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 117,
+          "AllOkCount": 0,
+          "AllFailCount": 117,
+          "AllBytes": 0,
+          "Duration": "00:00:20"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 135,
+              "RPS": 27,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 74.15,
+              "MeanMs": 2551.81,
+              "MaxMs": 17017.24,
+              "Percent50": 634.88,
+              "Percent75": 1146.88,
+              "Percent95": 15998.98,
+              "Percent99": 16990.21,
+              "StdDev": 4704.84,
+              "LatencyCount": {
+                "LessOrEq800": 82,
+                "More800Less1200": 26,
+                "MoreOrEq1200": 27
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 135,
+                  "RPS": 27,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 74.15,
+                  "MeanMs": 2551.81,
+                  "MaxMs": 17017.24,
+                  "Percent50": 634.88,
+                  "Percent75": 1146.88,
+                  "Percent95": 15998.98,
+                  "Percent99": 16990.21,
+                  "StdDev": 4704.84,
+                  "LatencyCount": {
+                    "LessOrEq800": 82,
+                    "More800Less1200": 26,
+                    "MoreOrEq1200": 27
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 135,
+          "AllOkCount": 0,
+          "AllFailCount": 135,
+          "AllBytes": 0,
+          "Duration": "00:00:20"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:25",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 75,
+              "RPS": 15,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 6.78,
+              "MeanMs": 502.69,
+              "MaxMs": 3036.07,
+              "Percent50": 278.78,
+              "Percent75": 439.81,
+              "Percent95": 1765.38,
+              "Percent99": 2797.57,
+              "StdDev": 671.14,
+              "LatencyCount": {
+                "LessOrEq800": 63,
+                "More800Less1200": 2,
+                "MoreOrEq1200": 10
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 75,
+                  "RPS": 15,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 6.78,
+                  "MeanMs": 502.69,
+                  "MaxMs": 3036.07,
+                  "Percent50": 278.78,
+                  "Percent75": 439.81,
+                  "Percent95": 1765.38,
+                  "Percent99": 2797.57,
+                  "StdDev": 671.14,
+                  "LatencyCount": {
+                    "LessOrEq800": 63,
+                    "More800Less1200": 2,
+                    "MoreOrEq1200": 10
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 75,
+          "AllOkCount": 0,
+          "AllFailCount": 75,
+          "AllBytes": 0,
+          "Duration": "00:00:25"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 77,
+              "RPS": 15.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 14.41,
+              "MeanMs": 834.99,
+              "MaxMs": 3357.39,
+              "Percent50": 391.17,
+              "Percent75": 1423.36,
+              "Percent95": 2799.62,
+              "Percent99": 3018.75,
+              "StdDev": 918.07,
+              "LatencyCount": {
+                "LessOrEq800": 48,
+                "More800Less1200": 3,
+                "MoreOrEq1200": 26
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 77,
+                  "RPS": 15.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 14.41,
+                  "MeanMs": 834.99,
+                  "MaxMs": 3357.39,
+                  "Percent50": 391.17,
+                  "Percent75": 1423.36,
+                  "Percent95": 2799.62,
+                  "Percent99": 3018.75,
+                  "StdDev": 918.07,
+                  "LatencyCount": {
+                    "LessOrEq800": 48,
+                    "More800Less1200": 3,
+                    "MoreOrEq1200": 26
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 77,
+          "AllOkCount": 0,
+          "AllFailCount": 77,
+          "AllBytes": 0,
+          "Duration": "00:00:25"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:30",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 220,
+              "RPS": 44,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 5.58,
+              "MeanMs": 233.28,
+              "MaxMs": 1172.61,
+              "Percent50": 174.46,
+              "Percent75": 252.93,
+              "Percent95": 992.77,
+              "Percent99": 1153.02,
+              "StdDev": 255.58,
+              "LatencyCount": {
+                "LessOrEq800": 206,
+                "More800Less1200": 14,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 220,
+                  "RPS": 44,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 5.58,
+                  "MeanMs": 233.28,
+                  "MaxMs": 1172.61,
+                  "Percent50": 174.46,
+                  "Percent75": 252.93,
+                  "Percent95": 992.77,
+                  "Percent99": 1153.02,
+                  "StdDev": 255.58,
+                  "LatencyCount": {
+                    "LessOrEq800": 206,
+                    "More800Less1200": 14,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 220,
+          "AllOkCount": 0,
+          "AllFailCount": 220,
+          "AllBytes": 0,
+          "Duration": "00:00:30"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 158,
+              "RPS": 31.6,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 12.72,
+              "MeanMs": 252.47,
+              "MaxMs": 1133.18,
+              "Percent50": 199.3,
+              "Percent75": 300.54,
+              "Percent95": 919.04,
+              "Percent99": 1126.4,
+              "StdDev": 244.76,
+              "LatencyCount": {
+                "LessOrEq800": 148,
+                "More800Less1200": 10,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 158,
+                  "RPS": 31.6,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 12.72,
+                  "MeanMs": 252.47,
+                  "MaxMs": 1133.18,
+                  "Percent50": 199.3,
+                  "Percent75": 300.54,
+                  "Percent95": 919.04,
+                  "Percent99": 1126.4,
+                  "StdDev": 244.76,
+                  "LatencyCount": {
+                    "LessOrEq800": 148,
+                    "More800Less1200": 10,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 158,
+          "AllOkCount": 0,
+          "AllFailCount": 158,
+          "AllBytes": 0,
+          "Duration": "00:00:30"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:35",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 120,
+              "RPS": 24,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 9.35,
+              "MeanMs": 278.39,
+              "MaxMs": 2984.4,
+              "Percent50": 104.58,
+              "Percent75": 188.16,
+              "Percent95": 1505.28,
+              "Percent99": 2740.22,
+              "StdDev": 545.89,
+              "LatencyCount": {
+                "LessOrEq800": 109,
+                "More800Less1200": 4,
+                "MoreOrEq1200": 7
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 120,
+                  "RPS": 24,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 9.35,
+                  "MeanMs": 278.39,
+                  "MaxMs": 2984.4,
+                  "Percent50": 104.58,
+                  "Percent75": 188.16,
+                  "Percent95": 1505.28,
+                  "Percent99": 2740.22,
+                  "StdDev": 545.89,
+                  "LatencyCount": {
+                    "LessOrEq800": 109,
+                    "More800Less1200": 4,
+                    "MoreOrEq1200": 7
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 120,
+          "AllOkCount": 0,
+          "AllFailCount": 120,
+          "AllBytes": 0,
+          "Duration": "00:00:35"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 127,
+              "RPS": 25.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 7.44,
+              "MeanMs": 299.51,
+              "MaxMs": 2188.65,
+              "Percent50": 150.14,
+              "Percent75": 361.73,
+              "Percent95": 1071.1,
+              "Percent99": 1207.3,
+              "StdDev": 380.74,
+              "LatencyCount": {
+                "LessOrEq800": 108,
+                "More800Less1200": 17,
+                "MoreOrEq1200": 2
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 127,
+                  "RPS": 25.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 7.44,
+                  "MeanMs": 299.51,
+                  "MaxMs": 2188.65,
+                  "Percent50": 150.14,
+                  "Percent75": 361.73,
+                  "Percent95": 1071.1,
+                  "Percent99": 1207.3,
+                  "StdDev": 380.74,
+                  "LatencyCount": {
+                    "LessOrEq800": 108,
+                    "More800Less1200": 17,
+                    "MoreOrEq1200": 2
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 127,
+          "AllOkCount": 0,
+          "AllFailCount": 127,
+          "AllBytes": 0,
+          "Duration": "00:00:35"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:40",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 238,
+              "RPS": 47.6,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 3.93,
+              "MeanMs": 56.9,
+              "MaxMs": 312.38,
+              "Percent50": 40.8,
+              "Percent75": 74.94,
+              "Percent95": 145.28,
+              "Percent99": 287.74,
+              "StdDev": 56.69,
+              "LatencyCount": {
+                "LessOrEq800": 238,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 238,
+                  "RPS": 47.6,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 3.93,
+                  "MeanMs": 56.9,
+                  "MaxMs": 312.38,
+                  "Percent50": 40.8,
+                  "Percent75": 74.94,
+                  "Percent95": 145.28,
+                  "Percent99": 287.74,
+                  "StdDev": 56.69,
+                  "LatencyCount": {
+                    "LessOrEq800": 238,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 238,
+          "AllOkCount": 0,
+          "AllFailCount": 238,
+          "AllBytes": 0,
+          "Duration": "00:00:40"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 247,
+              "RPS": 49.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 5.34,
+              "MeanMs": 56.57,
+              "MaxMs": 402.75,
+              "Percent50": 37.44,
+              "Percent75": 71.42,
+              "Percent95": 176.13,
+              "Percent99": 312.32,
+              "StdDev": 61.06,
+              "LatencyCount": {
+                "LessOrEq800": 247,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 247,
+                  "RPS": 49.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 5.34,
+                  "MeanMs": 56.57,
+                  "MaxMs": 402.75,
+                  "Percent50": 37.44,
+                  "Percent75": 71.42,
+                  "Percent95": 176.13,
+                  "Percent99": 312.32,
+                  "StdDev": 61.06,
+                  "LatencyCount": {
+                    "LessOrEq800": 247,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 247,
+          "AllOkCount": 0,
+          "AllFailCount": 247,
+          "AllBytes": 0,
+          "Duration": "00:00:40"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:45",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 181,
+              "RPS": 36.2,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 4.27,
+              "MeanMs": 84.69,
+              "MaxMs": 2568.43,
+              "Percent50": 22.4,
+              "Percent75": 65.98,
+              "Percent95": 254.46,
+              "Percent99": 1062.91,
+              "StdDev": 267.17,
+              "LatencyCount": {
+                "LessOrEq800": 178,
+                "More800Less1200": 1,
+                "MoreOrEq1200": 2
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 181,
+                  "RPS": 36.2,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 4.27,
+                  "MeanMs": 84.69,
+                  "MaxMs": 2568.43,
+                  "Percent50": 22.4,
+                  "Percent75": 65.98,
+                  "Percent95": 254.46,
+                  "Percent99": 1062.91,
+                  "StdDev": 267.17,
+                  "LatencyCount": {
+                    "LessOrEq800": 178,
+                    "More800Less1200": 1,
+                    "MoreOrEq1200": 2
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 181,
+          "AllOkCount": 0,
+          "AllFailCount": 181,
+          "AllBytes": 0,
+          "Duration": "00:00:45"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 180,
+              "RPS": 36,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 4.5,
+              "MeanMs": 105.64,
+              "MaxMs": 2665.01,
+              "Percent50": 27.34,
+              "Percent75": 89.54,
+              "Percent95": 344.32,
+              "Percent99": 1251.33,
+              "StdDev": 268.69,
+              "LatencyCount": {
+                "LessOrEq800": 175,
+                "More800Less1200": 2,
+                "MoreOrEq1200": 3
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 180,
+                  "RPS": 36,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 4.5,
+                  "MeanMs": 105.64,
+                  "MaxMs": 2665.01,
+                  "Percent50": 27.34,
+                  "Percent75": 89.54,
+                  "Percent95": 344.32,
+                  "Percent99": 1251.33,
+                  "StdDev": 268.69,
+                  "LatencyCount": {
+                    "LessOrEq800": 175,
+                    "More800Less1200": 2,
+                    "MoreOrEq1200": 3
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 180,
+          "AllOkCount": 0,
+          "AllFailCount": 180,
+          "AllBytes": 0,
+          "Duration": "00:00:45"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:50",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 230,
+              "RPS": 46,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 3.41,
+              "MeanMs": 26.88,
+              "MaxMs": 546.43,
+              "Percent50": 11.19,
+              "Percent75": 23.17,
+              "Percent95": 73.02,
+              "Percent99": 503.04,
+              "StdDev": 64.28,
+              "LatencyCount": {
+                "LessOrEq800": 230,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 230,
+                  "RPS": 46,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 3.41,
+                  "MeanMs": 26.88,
+                  "MaxMs": 546.43,
+                  "Percent50": 11.19,
+                  "Percent75": 23.17,
+                  "Percent95": 73.02,
+                  "Percent99": 503.04,
+                  "StdDev": 64.28,
+                  "LatencyCount": {
+                    "LessOrEq800": 230,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 230,
+          "AllOkCount": 0,
+          "AllFailCount": 230,
+          "AllBytes": 0,
+          "Duration": "00:00:50"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 221,
+              "RPS": 44.2,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 4.18,
+              "MeanMs": 34.85,
+              "MaxMs": 654.69,
+              "Percent50": 14.35,
+              "Percent75": 30.08,
+              "Percent95": 80,
+              "Percent99": 626.17,
+              "StdDev": 84.73,
+              "LatencyCount": {
+                "LessOrEq800": 221,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 221,
+                  "RPS": 44.2,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 4.18,
+                  "MeanMs": 34.85,
+                  "MaxMs": 654.69,
+                  "Percent50": 14.35,
+                  "Percent75": 30.08,
+                  "Percent95": 80,
+                  "Percent99": 626.17,
+                  "StdDev": 84.73,
+                  "LatencyCount": {
+                    "LessOrEq800": 221,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 221,
+          "AllOkCount": 0,
+          "AllFailCount": 221,
+          "AllBytes": 0,
+          "Duration": "00:00:50"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:00:55",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 257,
+              "RPS": 51.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 3.29,
+              "MeanMs": 53.87,
+              "MaxMs": 438.14,
+              "Percent50": 26.51,
+              "Percent75": 57.38,
+              "Percent95": 215.04,
+              "Percent99": 291.58,
+              "StdDev": 70.48,
+              "LatencyCount": {
+                "LessOrEq800": 257,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 257,
+                  "RPS": 51.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 3.29,
+                  "MeanMs": 53.87,
+                  "MaxMs": 438.14,
+                  "Percent50": 26.51,
+                  "Percent75": 57.38,
+                  "Percent95": 215.04,
+                  "Percent99": 291.58,
+                  "StdDev": 70.48,
+                  "LatencyCount": {
+                    "LessOrEq800": 257,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 257,
+          "AllOkCount": 0,
+          "AllFailCount": 257,
+          "AllBytes": 0,
+          "Duration": "00:00:55"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 263,
+              "RPS": 52.6,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 3.95,
+              "MeanMs": 63.82,
+              "MaxMs": 437.24,
+              "Percent50": 34.56,
+              "Percent75": 79.49,
+              "Percent95": 227.33,
+              "Percent99": 305.92,
+              "StdDev": 75.21,
+              "LatencyCount": {
+                "LessOrEq800": 263,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 263,
+                  "RPS": 52.6,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 3.95,
+                  "MeanMs": 63.82,
+                  "MaxMs": 437.24,
+                  "Percent50": 34.56,
+                  "Percent75": 79.49,
+                  "Percent95": 227.33,
+                  "Percent99": 305.92,
+                  "StdDev": 75.21,
+                  "LatencyCount": {
+                    "LessOrEq800": 263,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 263,
+          "AllOkCount": 0,
+          "AllFailCount": 263,
+          "AllBytes": 0,
+          "Duration": "00:00:55"
+        }
+      ]
+    },
+    {
+      "Timestamp": "00:01:00",
+      "ScenarioStats": [
+        {
+          "ScenarioName": "Report Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 243,
+              "RPS": 48.6,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 3.36,
+              "MeanMs": 35.71,
+              "MaxMs": 458.68,
+              "Percent50": 20.26,
+              "Percent75": 43.39,
+              "Percent95": 112.96,
+              "Percent99": 187.14,
+              "StdDev": 48.19,
+              "LatencyCount": {
+                "LessOrEq800": 243,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 243,
+                  "RPS": 48.6,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 3.36,
+                  "MeanMs": 35.71,
+                  "MaxMs": 458.68,
+                  "Percent50": 20.26,
+                  "Percent75": 43.39,
+                  "Percent95": 112.96,
+                  "Percent99": 187.14,
+                  "StdDev": 48.19,
+                  "LatencyCount": {
+                    "LessOrEq800": 243,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 243,
+          "AllOkCount": 0,
+          "AllFailCount": 243,
+          "AllBytes": 0,
+          "Duration": "00:01:00"
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "Ok": {
+            "Request": {
+              "Count": 0,
+              "RPS": 0,
+              "Percent": 0
+            },
+            "Latency": {
+              "MinMs": 0,
+              "MeanMs": 0,
+              "MaxMs": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "LatencyCount": {
+                "LessOrEq800": 0,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "Fail": {
+            "Request": {
+              "Count": 242,
+              "RPS": 48.4,
+              "Percent": 100
+            },
+            "Latency": {
+              "MinMs": 4.27,
+              "MeanMs": 46.6,
+              "MaxMs": 461.36,
+              "Percent50": 30.48,
+              "Percent75": 56.77,
+              "Percent95": 127.68,
+              "Percent99": 352.77,
+              "StdDev": 56.66,
+              "LatencyCount": {
+                "LessOrEq800": 242,
+                "More800Less1200": 0,
+                "MoreOrEq1200": 0
+              }
+            },
+            "DataTransfer": {
+              "MinBytes": 0,
+              "MeanBytes": 0,
+              "MaxBytes": 0,
+              "Percent50": 0,
+              "Percent75": 0,
+              "Percent95": 0,
+              "Percent99": 0,
+              "StdDev": 0,
+              "AllBytes": 0
+            },
+            "StatusCodes": []
+          },
+          "StepStats": [
+            {
+              "StepName": "global information",
+              "Ok": {
+                "Request": {
+                  "Count": 0,
+                  "RPS": 0,
+                  "Percent": 0
+                },
+                "Latency": {
+                  "MinMs": 0,
+                  "MeanMs": 0,
+                  "MaxMs": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "LatencyCount": {
+                    "LessOrEq800": 0,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              },
+              "Fail": {
+                "Request": {
+                  "Count": 242,
+                  "RPS": 48.4,
+                  "Percent": 100
+                },
+                "Latency": {
+                  "MinMs": 4.27,
+                  "MeanMs": 46.6,
+                  "MaxMs": 461.36,
+                  "Percent50": 30.48,
+                  "Percent75": 56.77,
+                  "Percent95": 127.68,
+                  "Percent99": 352.77,
+                  "StdDev": 56.66,
+                  "LatencyCount": {
+                    "LessOrEq800": 242,
+                    "More800Less1200": 0,
+                    "MoreOrEq1200": 0
+                  }
+                },
+                "DataTransfer": {
+                  "MinBytes": 0,
+                  "MeanBytes": 0,
+                  "MaxBytes": 0,
+                  "Percent50": 0,
+                  "Percent75": 0,
+                  "Percent95": 0,
+                  "Percent99": 0,
+                  "StdDev": 0,
+                  "AllBytes": 0
+                },
+                "StatusCodes": []
+              }
+            }
+          ],
+          "LoadSimulationStats": {
+            "SimulationName": "inject",
+            "Value": 50
+          },
+          "CurrentOperation": "Bombing",
+          "AllRequestCount": 242,
+          "AllOkCount": 0,
+          "AllFailCount": 242,
+          "AllBytes": 0,
+          "Duration": "00:01:00"
+        }
+      ]
+    }
+  ],
+  "Metrics": [
+    {
+      "Name": "cpu: usage",
+      "MeasureUnit": "%",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 6.28,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 6.71,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 8.29,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 9.78,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 0,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 1.51,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 0,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 2.48,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 4.79,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 4.76,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 7.11,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 6.87,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 3.33,
+        "Max": 13.45,
+        "Percent50": 2.2,
+        "Percent75": 5.74,
+        "Percent95": 8.75,
+        "Percent99": 12.33
+      }
+    },
+    {
+      "Name": "data: received",
+      "MeasureUnit": "MB",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 2,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 1.87,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 1.7,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 1.54,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 1.47,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 1.26,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 1.24,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 1.12,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 1.01,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 0.49,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 0.03,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 0.03,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 1.64,
+        "Max": 2.79,
+        "Percent50": 1.94,
+        "Percent75": 2.51,
+        "Percent95": 2.74,
+        "Percent99": 2.79
+      }
+    },
+    {
+      "Name": "data: sent",
+      "MeasureUnit": "MB",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 0.89,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 0.8,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 0.69,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 0.59,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 0.55,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 0.42,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 0.41,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 0.34,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 0.3,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 0.2,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 0.08,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 0.04,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 0.75,
+        "Max": 1.34,
+        "Percent50": 0.85,
+        "Percent75": 1.22,
+        "Percent95": 1.32,
+        "Percent99": 1.34
+      }
+    },
+    {
+      "Name": "memory: gc-heap-size",
+      "MeasureUnit": "MB",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 20.41,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 20.29,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 23.15,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 22.57,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 23.13,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 21.46,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 21.97,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 21.34,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 18.25,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 18.45,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 16.58,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 13.37,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 19.21,
+        "Max": 25.25,
+        "Percent50": 20.57,
+        "Percent75": 21.65,
+        "Percent95": 23.77,
+        "Percent99": 24.05
+      }
+    },
+    {
+      "Name": "memory: working-set",
+      "MeasureUnit": "MB",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 121.63,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 124.36,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 125.75,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 120.04,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 121.25,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 116.57,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 115.5,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 114.83,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 113.78,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 103.92,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 93.02,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 87.04,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 109.47,
+        "Max": 126.39,
+        "Percent50": 116.39,
+        "Percent75": 120.39,
+        "Percent95": 124.47,
+        "Percent99": 126.39
+      }
+    },
+    {
+      "Name": "threadpool: queue-length",
+      "MeasureUnit": "",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 0,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 0,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 0,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 0,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 4,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 122,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 0,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 48,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 58,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 244,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 172,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 165,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 72.62,
+        "Max": 274,
+        "Percent50": 72,
+        "Percent75": 112,
+        "Percent95": 197,
+        "Percent99": 257
+      }
+    },
+    {
+      "Name": "threadpool: thread-count",
+      "MeasureUnit": "",
+      "MetricType": "Gauge",
+      "History": [
+        {
+          "Value": 30,
+          "Timestamp": "00:01:00"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:55"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:50"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:45"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:40"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:35"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:30"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:25"
+        },
+        {
+          "Value": 30,
+          "Timestamp": "00:00:20"
+        },
+        {
+          "Value": 26,
+          "Timestamp": "00:00:15"
+        },
+        {
+          "Value": 25,
+          "Timestamp": "00:00:10"
+        },
+        {
+          "Value": 16,
+          "Timestamp": "00:00:05"
+        }
+      ],
+      "Percentiles": {
+        "Mean": 23.93,
+        "Max": 30,
+        "Percent50": 30,
+        "Percent75": 30,
+        "Percent95": 30,
+        "Percent99": 30
+      }
+    }
+  ],
+  "Hints": [
+    {
+      "SourceName": "Report Scenario",
+      "SourceType": "Scenario",
+      "Hint": "Scenario: 'Report Scenario' didn't track data transfer. In order to track data transfer, you should use Response.Ok(sizeInBytes: value)"
+    },
+    {
+      "SourceName": "Inject Scenario",
+      "SourceType": "Scenario",
+      "Hint": "Scenario: 'Inject Scenario' didn't track status codes. In order to track status code, you should use Response.Ok(statusCode: value)"
+    },
+    {
+      "SourceName": "Inject Scenario",
+      "SourceType": "Scenario",
+      "Hint": "Scenario: 'Inject Scenario' didn't track data transfer. In order to track data transfer, you should use Response.Ok(sizeInBytes: value)"
+    }
+  ],
+  "NBomberConfig": {
+    "GlobalSettings": {
+      "ScenariosSettings": [
+        {
+          "ScenarioName": "Report Scenario",
+          "LoadSimulationsSettings": [
+            {
+              "Inject": [
+                50,
+                "00:00:01",
+                "00:01:00"
+              ]
+            }
+          ],
+          "MaxFailCount": 5000
+        },
+        {
+          "ScenarioName": "Inject Scenario",
+          "LoadSimulationsSettings": [
+            {
+              "Inject": [
+                50,
+                "00:00:01",
+                "00:01:00"
+              ]
+            }
+          ],
+          "MaxFailCount": 5000
+        }
+      ],
+      "ReportingInterval": "00:00:05",
+      "EnableStopTestForcibly": false,
+      "ScenarioCompletionTimeout": "00:01:00"
+    }
+  },
+  "ClusterNodes": [
+    {
+      "NodeId": "",
+      "AgentGroup": "",
+      "NodeInfo": {
+        "MachineName": "DAILEON",
+        "NodeType": "SingleNode",
+        "CurrentOperation": "Complete",
+        "OS": "Microsoft Windows NT 10.0.22631.0",
+        "DotNetVersion": ".NETCoreApp,Version=v8.0",
+        "Processor": "AMD64 Family 23 Model 24 Stepping 1, AuthenticAMD",
+        "CoresCount": 8,
+        "NBomberVersion": "5.7.0"
+      }
+    }
+  ]
+};
+          const emptyStep = {
+  "StepName": "empty",
+  "Ok": {
+    "Request": {
+      "Count": 0,
+      "RPS": 0,
+      "Percent": 0
+    },
+    "Latency": {
+      "MinMs": 0,
+      "MeanMs": 0,
+      "MaxMs": 0,
+      "Percent50": 0,
+      "Percent75": 0,
+      "Percent95": 0,
+      "Percent99": 0,
+      "StdDev": 0,
+      "LatencyCount": {
+        "LessOrEq800": 0,
+        "More800Less1200": 0,
+        "MoreOrEq1200": 0
+      }
+    },
+    "DataTransfer": {
+      "MinBytes": 0,
+      "MeanBytes": 0,
+      "MaxBytes": 0,
+      "Percent50": 0,
+      "Percent75": 0,
+      "Percent95": 0,
+      "Percent99": 0,
+      "StdDev": 0,
+      "AllBytes": 0
+    },
+    "StatusCodes": []
+  },
+  "Fail": {
+    "Request": {
+      "Count": 0,
+      "RPS": 0,
+      "Percent": 0
+    },
+    "Latency": {
+      "MinMs": 0,
+      "MeanMs": 0,
+      "MaxMs": 0,
+      "Percent50": 0,
+      "Percent75": 0,
+      "Percent95": 0,
+      "Percent99": 0,
+      "StdDev": 0,
+      "LatencyCount": {
+        "LessOrEq800": 0,
+        "More800Less1200": 0,
+        "MoreOrEq1200": 0
+      }
+    },
+    "DataTransfer": {
+      "MinBytes": 0,
+      "MeanBytes": 0,
+      "MaxBytes": 0,
+      "Percent50": 0,
+      "Percent75": 0,
+      "Percent95": 0,
+      "Percent99": 0,
+      "StdDev": 0,
+      "AllBytes": 0
+    },
+    "StatusCodes": []
+  }
+}
+    </script>
+<script>const toKb = bytes => (bytes / 1024.0).toFixed(3);
+
+const toMb = bytes => (bytes / 1024.0 / 1024.0).toFixed(1);
+
+function prepareMetrics(metrics, datePrefix) {
+    var data = metrics.map(metric => {
+        var history = metric.History.map(x => Object.assign(x, { Timestamp: `${datePrefix}-${x.Timestamp}` }) );
+        metric.History = history
+        return metric;
+    });
+    return data;
+}
+
+function preparePluginsStats(pluginStats) {
+    return pluginStats.map(x => x.Tables);
+}
+
+let emptySteps = {};
+
+function createEmptyStep(name) {
+    if (emptySteps[name]) {
+        return emptySteps[name];
+    }
+    else {
+        let updatedStep = Object.assign({}, emptyStep, { StepName: name });
+        emptySteps[name] = updatedStep;
+        return updatedStep;
+    }
+}
+
+function parseTestCreatedDate(testInfo) {
+    var created = testInfo.Created;
+    var date = moment(created);
+
+    if (!date.isValid())
+        date = moment();
+
+    var dateTime = date.format('MM/DD/YYYY, h:mm:ss');
+    var dateOnly = date.format('MM/DD/YYYY');
+
+    return { DateTime: dateTime, DateOnly: dateOnly };
+}
+
+moment.locale('en');
+
+var app = Vue.createApp({
+    data() {
+        var date = parseTestCreatedDate(viewModel.FinalStats.TestInfo);
+
+        viewModel.FinalStats.TestInfo.Created = date;
+
+        var metrics = prepareMetrics(viewModel.Metrics, date.DateOnly);
+        var plugins = preparePluginsStats(viewModel.FinalStats.PluginStats);
+
+        return {
+            currentView: "global-view",
+            currentScenarios: viewModel.FinalStats.ScenarioStats,
+            currentScenarioName: null,
+            currentTestInfo: viewModel.FinalStats.TestInfo,
+            currentNodeInfo: viewModel.FinalStats.NodeInfo,
+            currentHints: viewModel.Hints,
+            currentMetrics: metrics,
+            currentPlugins: plugins,
+            nbConfig: viewModel.NBomberConfig,
+            clusterNodes: viewModel.ClusterNodes,
+            viewModel: viewModel
+        }
+    },
+    methods: {
+        loadView(viewName, scenarioName) {
+
+            if (viewName === 'global-view') {
+                this.currentScenarios = viewModel.FinalStats.ScenarioStats;
+                this.currentScenarioName = null;
+                this.currentStepsStatsHistory = null;
+            }
+            else if (viewName === 'cluster-view') {
+                this.currentScenarios = null;
+                this.currentScenarioName = null;
+                this.currentStepsStatsHistory = null;
+            }
+            else if (viewName === 'scenario-view') {
+                this.currentScenarios = viewModel.FinalStats.ScenarioStats.filter(x => x.ScenarioName === scenarioName);
+                this.currentScenarioName = scenarioName;
+
+                var dateOnly = viewModel.FinalStats.TestInfo.Created.DateOnly;
+
+                var timeLineHistory = viewModel.TimeLineHistory.flatMap(x => x.ScenarioStats.filter(x => x.ScenarioName === scenarioName));
+
+                var stepsStatsHistory =
+                    this.currentScenarios[0].StepStats
+                        .map(x => x.StepName)
+                        .map(stName => {
+
+                            var empStep = createEmptyStep(stName);
+
+                            return timeLineHistory.flatMap(scn => {
+                                var step = scn.StepStats.find(st => st.StepName === stName);
+
+                                if (step)
+                                    return { Timestamp: `${dateOnly}-${scn.Duration}`, Step: step, Load: scn.LoadSimulationStats };
+                                else
+                                    return { Timestamp: `${dateOnly}-${scn.Duration}`, Step: empStep, Load: scn.LoadSimulationStats };
+                            })
+                        });
+
+                this.currentStepsStatsHistory = stepsStatsHistory;
+            }
+            else if (viewName === 'hints-view') {
+                this.currentScenarios = viewModel.FinalStats.ScenarioStats;
+                this.currentScenarioName = null;
+                this.currentStepsStatsHistory = null;
+            }
+            else if (viewName === 'metrics-view') {
+                this.currentScenarios = viewModel.FinalStats.ScenarioStats;
+                this.currentScenarioName = null;
+                this.currentStepsStatsHistory = null;
+            }
+            else if (viewName === 'plugins-view') {
+                this.currentScenarios = viewModel.FinalStats.ScenarioStats;
+                this.currentScenarioName = null;
+                this.currentStepsStatsHistory = null;
+            }
+
+            this.currentView = viewName;
+        }
+    },
+    computed: {
+        currentProperties() {
+            return {
+                scenarioStats: this.currentScenarios,
+                stepsStatsHistory: this.currentStepsStatsHistory,
+                testInfo: this.currentTestInfo,
+                nodeInfo: this.currentNodeInfo,
+                hints: this.currentHints,
+                plugins: this.currentPlugins,
+                metrics: this.currentMetrics,
+                nbConfig: this.nbConfig,
+                clusterNodes: this.clusterNodes
+            }
+        }
+    }
+})
+
+app
+    .component('global-view', {
+        props: ['scenarioStats', 'testInfo', 'nbConfig'],
+        template: '#global-view',
+    })
+    .component('cluster-view', {
+        props: ['testInfo', 'nodeInfo', 'nbConfig', 'clusterNodes'],
+        template: '#cluster-view',
+    })
+    .component('scenario-view', {
+        props: ['stepsStatsHistory', 'scenarioStats', 'testInfo'],
+        template: '#scenario-view',
+    })
+    .component('scenario-charts-view', {
+        props: ['stepsStatsHistory'],
+        template: '#scenario-charts-view'
+    })
+    .component('hints-view', {
+        props: ['hints', 'testInfo', 'scenarioStats'],
+        template: '#hints-view'
+    })
+    .component('plugins-view', {
+        props: ['testInfo', 'nodeInfo', 'scenarioStats', 'plugins'],
+        template: '#plugins-view'
+    })
+    .component('metrics-view', {
+        props: ['testInfo', 'nodeInfo', 'scenarioStats', 'metrics'],
+        template: '#metrics-view'
+    })
+    .component('load-test-info', {
+        props: ['testInfo'],
+        template: `
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-5">
+                        <h5 class="text-muted text-uppercase fw-semi-bold">Load test info</h5>
+                    </div>
+                    <div class="col-6 mb-5">
+                        <h5 class="text-uppercase">Test suite</h5>
+                        <p class="mb-0">{{ testInfo.TestSuite }}</p>
+                    </div>
+                    <div class="col-6 mb-5">
+                        <h5 class="text-uppercase">Test name</h5>
+                        <p class="mb-0">{{ testInfo.TestName }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-uppercase">Session id</h5>
+                        <p class="mb-0">{{ testInfo.SessionId }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-uppercase">Created</h5>
+                        <p class="mb-0">{{ testInfo.Created.DateTime }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `
+    })
+    .component('node-info', {
+        props: ['nodeInfo'],
+        template: `
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-5">
+                        <h5 class="text-muted text-uppercase fw-semi-bold">Node info</h5>
+                    </div>
+                    <div class="col-6 mb-5">
+                        <h5 class="text-uppercase">Node type</h5>
+                        <p class="mb-0 badge bg-primary">{{ nodeInfo.NodeType }}</p>
+                    </div>
+                    <div class="col-6 mb-5">
+                        <h5 class="text-uppercase">OS</h5>
+                        <p class="mb-0">{{ nodeInfo.OS }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-uppercase">.NET Version</h5>
+                        <p class="mb-0">{{ nodeInfo.DotNetVersion }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-uppercase">CPU Cores</h5>
+                        <p class="mb-0">{{ nodeInfo.CoresCount }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `
+    })
+    .component('scenario-stats-table', {
+        props: ['isOk', 'scenarioStats'],
+        template: `
+        <div class="card h-100 shadow-lg p-3 mb-5 bg-white rounded-1">
+            <div class="card-body">
+
+                <template v-if="isOk === true || isOk === false && scenarioStats.filter(x => x.AllFailCount > 0).length > 0">
+
+                    <div class="col-12 mb-5">
+                        <template v-if="isOk === true">
+                            <h5 class="text-muted text-uppercase fw-semi-bold">Ok Statistics</h5>
+                        </template>
+                        <template v-else>
+                            <h5 class="text-muted text-uppercase fw-semi-bold">Failures Statistics</h5>
+                        </template>
+                    </div>
+                    <div class="table-responsive table-card">
+                        <table class="table table-bordered text-wrap table-centered mb-0 table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Scenario</th>
+                                    <th scope="col">Step</th>
+                                    <th scope="col">Information</th>
+                                    <th scope="col">Statistics</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-for="scn in scenarioStats">
+                                    <tr v-for="(st, index) in scn.StepStats.filter(x => isOk || !isOk && x.Fail.Request.Count > 0)">
+                                        <td>{{ index === 0 ? scn.ScenarioName : ''}}</td>
+
+                                        <td v-if="st.StepName !== 'global information'">{{st.StepName}}</td>
+                                        <td v-else><span style="font-size:3.5mm" class="badge bg-info">{{st.StepName}}</span></td>
+
+                                        <td v-if="index === 0">duration: {{scn.Duration}}</td>
+                                        <td v-else></td>
+
+                                        <template v-if="isOk === true">
+                                            <td><h5 style="display:inline">requests:</h5> all = {{st.Ok.Request.Count + st.Fail.Request.Count}}, <strong class="text-success">ok = {{st.Ok.Request.Count}}</strong>, <strong class="text-danger">fail = {{st.Fail.Request.Count}}</strong>, <strong>RPS = {{st.Ok.Request.RPS}}/s </strong>
+                                                <br>
+                                                <h5 style="display:inline">latency (ms):</h5> min = {{st.Ok.Latency.MinMs}}, mean = {{st.Ok.Latency.MeanMs}}, max = {{st.Ok.Latency.MaxMs}}, StdDev = {{st.Ok.Latency.StdDev}}
+                                                <br>
+                                                <h5 style="display:inline">latency percentile (ms):</h5> p50 = {{st.Ok.Latency.Percent50}}, p75 = {{st.Ok.Latency.Percent75}}, p95 = {{st.Ok.Latency.Percent95}}, p99 = {{st.Ok.Latency.Percent99}}
+                                                <br>
+                                                <h5 style="display:inline">data (KB):</h5> mean = {{ convertToKb(st.Ok.DataTransfer.MeanBytes) }}, max = {{ convertToKb(st.Ok.DataTransfer.MaxBytes) }}, all = {{ convertToMb(st.Ok.DataTransfer.AllBytes) }} MB
+                                                <br>
+                                            </td>
+                                        </template>
+                                        <template v-else>
+                                            <td><h5 style="display:inline">requests:</h5> all = {{st.Ok.Request.Count + st.Fail.Request.Count}}, <strong class="text-success">ok = {{st.Ok.Request.Count}}</strong>, <strong class="text-danger">fail = {{st.Fail.Request.Count}}</strong>, <strong>RPS = {{st.Fail.Request.RPS}}/s </strong>
+                                                <br>
+                                                <h5 style="display:inline">latency (ms):</h5> min = {{st.Fail.Latency.MinMs}}, mean = {{st.Fail.Latency.MeanMs}}, max = {{st.Fail.Latency.MaxMs}}, StdDev = {{st.Fail.Latency.StdDev}}
+                                                <br>
+                                                <h5 style="display:inline">latency percentile (ms):</h5> p50 = {{st.Fail.Latency.Percent50}}, p75 = {{st.Fail.Latency.Percent75}}, p95 = {{st.Fail.Latency.Percent95}}, p99 = {{st.Fail.Latency.Percent99}}
+                                                <br>
+                                                <h5 style="display:inline">data (KB):</h5> mean = {{ convertToKb(st.Fail.DataTransfer.MeanBytes) }}, max = {{ convertToKb(st.Fail.DataTransfer.MaxBytes) }}, all = {{ convertToMb(st.Fail.DataTransfer.AllBytes) }} MB
+                                                <br>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </template>
+                <template v-else>
+                    <h5 class="text-muted text-uppercase fw-semi-bold">No Failures</h5>
+                </template>
+
+            </div>
+        </div>
+        `,
+        methods: {
+            convertToKb(bytes) {
+                return toKb(bytes);
+            },
+            convertToMb(bytes) {
+                return toMb(bytes);
+            }
+        }
+    })
+    .component('scenario-status-code-table', {
+        props: ['scenarioStats'],
+        template: `
+        <div class="card h-100 shadow-lg p-3 mb-5 bg-white rounded-1">
+            <div class="card-body">
+                <div class="col-12 mb-5">
+                    <h5 class="text-muted text-uppercase fw-semi-bold">Status Codes</h5>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-12 col-xxl-8">
+                        <div class="table-responsive table-card">
+                            <table class="table table-bordered text-wrap table-centered mb-0 table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Status code</th>
+                                        <th scope="col">Count</th>
+                                        <th scope="col">Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="status in scenarioStats.Ok.StatusCodes.concat(scenarioStats.Fail.StatusCodes)">
+                                        <td v-if="!status.IsError"><strong class="text-success">{{ status.StatusCode }}</strong></td>
+                                        <td v-else><strong class="text-danger">{{ status.StatusCode }}</strong></td>
+                                        <td>{{ status.Count }}</td>
+                                        <td>{{ status.Message }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xxl-4">
+                        <chart-status-codes :status-codes="scenarioStats.Ok.StatusCodes.concat(scenarioStats.Fail.StatusCodes)"></chart-status-codes>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        `,
+        methods: {
+            convertToKb(bytes) {
+                return toKb(bytes);
+            },
+            convertToMb(bytes) {
+                return toMb(bytes);
+            }
+        }
+    })
+    .component('hints-table', {
+        props: ['hints'],
+        template: `
+        <div class="card h-100 shadow-lg p-3 mb-5 bg-white rounded-1">
+            <div class="card-body">
+                <div class="col-12">
+
+                    <div class="table-responsive table-card">
+                        <table class="table table-bordered text-wrap table-centered mb-0 table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-nowrap" scope="col">Source name</th>
+                                    <th class="text-nowrap" scope="col">Source type</th>
+                                    <th scope="col">Hint</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="hint in hints">
+                                    <td>{{ hint.SourceName }}</td>
+                                    <td>{{ hint.SourceType }}</td>
+                                    <td>{{ hint.Hint }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        `
+    })
+    .component('plugin-stats-table', {
+        props: ['data'],
+        template: `
+        <div class="card h-100 shadow-lg p-3 mb-5 bg-white rounded-1">
+            <div class="card-body">
+                <div class="col-12 mb-5">
+                    <h5 class="text-muted text-uppercase fw-semi-bold">{{ data.TableName }}</h5>
+                </div>
+
+                <div class="col-12">
+
+                    <div class="table-responsive table-card">
+                        <table class="table table-bordered text-wrap table-centered mb-0 table-hover">
+                            <thead>
+                                <tr>
+                                    <th v-for="c in data.Columns" class="text-nowrap" scope="col">{{ c.Caption }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="row in data.Rows">
+                                    <td v-for="value in row">{{ value }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+        `
+    })
+    .component('chart-metric', {
+        props: ['metric'],
+        template: `
+            <div class="col-xxl-4 col-12 mb-5">
+                <div class="card h-100">
+                    <div class="card-body">
+
+                        <div class="col-12 mb-5">
+                            <h5 class="text-muted text-uppercase fw-semi-bold">{{ metric.Name }}</h5>
+                        </div>
+
+                        <apex-chart :options="convertToOptions(metric)"></apex-chart>
+
+                    </div>
+                </div>
+            </div>
+        `,
+        methods: {
+            convertToOptions(metric) {
+
+                var options = {
+                    series: [{
+                        name: metric.Name,
+                        data: metric.History.map(x => [x.Timestamp, x.Value])
+                    }],
+                    chart: {
+                        type: 'line',
+                        stacked: false,
+                        height: 200,
+                        zoom: {
+                            type: 'x',
+                            enabled: false,
+                            autoScaleYaxis: true
+                        },
+                        toolbar: {
+                            autoSelected: 'zoom',
+                            tools: {
+                                download: false
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        dashArray: [0, 8]
+                    },
+                    markers: {
+                        size: 0,
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'left'
+                    },
+                    yaxis: {
+                        title: {
+                            text: metric.MeasureUnit,
+                        }
+                    },
+                    xaxis: {
+                        type: 'datetime',
+                        labels: {
+                            format: 'mm:ss',
+                        }
+                    },
+                    tooltip: {
+                        enabled: true,
+                        x: {
+                            show: false,
+                            format: 'mm:ss'
+                        },
+                    },
+                };
+
+                return options;
+            }
+        }
+    })
+    .component('chart-status-codes', {
+        props: ['statusCodes'],
+        template: `
+            <apex-chart :options="convertToOptions(statusCodes)"></apex-chart>
+        `,
+        methods: {
+            convertToOptions(statusCodes) {
+
+                var options = {
+                    series: statusCodes.map(x => x.Count),
+                    chart: {
+                        width: 300,
+                        type: 'donut',
+                    },
+                    labels: statusCodes.map(x => x.StatusCode),
+                    dataLabels: {
+                        enabled: false
+                    },
+                    legend: {
+                        position: 'right',
+                        offsetY: 0,
+                        height: 230,
+                    }
+                };
+
+                return options;
+            }
+        }
+    })
+    .component('chart-scenario-throughput', {
+        props: ['stepTimeLine'],
+        template: `
+            <div class="col-12 mb-5">
+                <h5 class="text-muted text-uppercase fw-semi-bold">{{ title }}</h5>
+            </div>
+            <apex-chart :options="convertToOptions(stepTimeLine)"></apex-chart>
+        `,
+        data() {
+            return { title: 'Throughput' };
+        },
+        methods: {
+            convertToOptions(stepTimeLine) {
+
+                var options = {
+                    series: [
+                        {
+                            name: "RPS",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Step.Ok.Request.RPS])
+                        },
+                        {
+                            name: "Load",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Load.Value])
+                        }],
+                    chart: {
+                        type: 'line',
+                        stacked: false,
+                        height: 300,
+                        zoom: {
+                            type: 'x',
+                            enabled: true,
+                            autoScaleYaxis: true
+                        },
+                        toolbar: {
+                            autoSelected: 'zoom',
+                            tools: {
+                                download: false
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        dashArray: [0, 8]
+                    },
+                    markers: {
+                        size: 0,
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'left'
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'RPS'
+                        }
+                    },
+                    xaxis: {
+                        type: 'datetime',
+                        labels: {
+                            format: 'mm:ss',
+                        },
+                    },
+                    tooltip: {
+                        enabled: true,
+                        x: {
+                            show: false,
+                            format: 'mm:ss'
+                        },
+                    },
+                };
+
+                return options;
+            }
+        }
+    })
+    .component('chart-scenario-latency', {
+        props: ['stepTimeLine'],
+        template: `
+            <div class="col-12 mb-5">
+                <h5 class="text-muted text-uppercase fw-semi-bold">{{ title }}</h5>
+            </div>
+            <apex-chart :options="convertToOptions(stepTimeLine)"></apex-chart>
+        `,
+        data() {
+            return { title: 'Latency' };
+        },
+        methods: {
+            convertToOptions(stepTimeLine) {
+
+                var options = {
+                    series: [
+                        {
+                            name: "p50",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Step.Ok.Latency.Percent50])
+                        },
+                        {
+                            name: "p75",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Step.Ok.Latency.Percent75])
+                        },
+                        {
+                            name: "p95",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Step.Ok.Latency.Percent95])
+                        },
+                        {
+                            name: "p99",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Step.Ok.Latency.Percent99])
+                        },
+                        {
+                            name: "Load",
+                            data: stepTimeLine.map(x => [x.Timestamp, x.Load.Value])
+                        }],
+                    chart: {
+                        type: 'line',
+                        stacked: false,
+                        height: 300,
+                        zoom: {
+                            type: 'x',
+                            enabled: true,
+                            autoScaleYaxis: true
+                        },
+                        toolbar: {
+                            autoSelected: 'zoom',
+                            tools: {
+                                download: false
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        dashArray: [0, 0, 0, 0, 8]
+                    },
+                    markers: {
+                        size: 0,
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'left'
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'ms'
+                        }
+                    },
+                    xaxis: {
+                        type: 'datetime',
+                        labels: {
+                            format: 'mm:ss',
+                        },
+                    },
+                    tooltip: {
+                        enabled: true,
+                        x: {
+                            show: false,
+                            format: 'mm:ss'
+                        },
+                    },
+                };
+
+                return options;
+            }
+        }
+    })
+    .component('chart-latency-indicators', {
+        props: ['title', 'scenarioStats'],
+        template: `
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="col-12 mb-5">
+                    <h5 class="text-muted text-uppercase fw-semi-bold">{{ title }}</h5>
+                </div>
+
+                <apex-chart :options="convertToOptions(scenarioStats)"></apex-chart>
+            </div>
+        </div>
+        `,
+        methods: {
+            convertToOptions(scenarioStats) {
+
+                var lessOrEq800 = scenarioStats.map(x => x.Ok.Latency.LatencyCount.LessOrEq800).reduce((a, b) => a + b, 0)
+                var more800Less1200 = scenarioStats.map(x => x.Ok.Latency.LatencyCount.More800Less1200).reduce((a, b) => a + b, 0)
+                var moreOrEq1200 = scenarioStats.map(x => x.Ok.Latency.LatencyCount.MoreOrEq1200).reduce((a, b) => a + b, 0)
+                var fails = scenarioStats.map(x => x.Fail.Request.Count).reduce((a, b) => a + b, 0)
+
+                var options = {
+                    series: [{
+                        name: '',
+                        data: [lessOrEq800, more800Less1200, moreOrEq1200, fails]
+                    }],
+                    chart: {
+                        height: 150,
+                        type: 'bar',
+                        toolbar: {
+                            show: false
+                        },
+                    },
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '45%',
+                            distributed: true,
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    legend: {
+                        show: false
+                    },
+                    xaxis: {
+                        categories: ['t < 800ms', '800ms < t < 1.2s', 't > 1.2s', 'failed'],
+                        labels: {
+                            style: {
+                                fontSize: '12px'
+                            }
+                        }
+                    }
+                };
+
+                return options;
+            }
+        }
+    })
+    .component('apex-chart', {
+        props: ['options'],
+        template: `
+            <div ref="container"></div>
+        `,
+        mounted() {
+            var chart = new ApexCharts(this.$refs.container, this.options);
+            chart.render();
+        }
+    })
+    .component('prism-json', {
+        props: ['jsonBody'],
+        template: `<pre style="background: #f9fafb;"><code ref="container" class="language-json">{{ jsonBody }}</code></pre>`,
+        mounted() {
+            Prism.highlightElement(this.$refs.container);
+        }
+    })
+    .component('cluster-nodes-table', {
+        props: ['nodes'],
+        template: `
+        <div class="card h-100 shadow-lg p-3 mb-5 bg-white rounded-1">
+            <div class="card-body">
+                <div class="col-12 mb-5">
+                    <h5 class="text-muted text-uppercase fw-semi-bold">Cluster nodes</h5>
+                </div>
+
+                <div class="col-12">
+
+                    <div class="table-responsive table-card">
+                        <table class="table table-bordered text-wrap table-centered mb-0 table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Node Id</th>
+                                    <th scope="col">Node Type</th>
+                                    <th scope="col">Agent Group</th>
+                                    <th scope="col">Processor</th>
+                                    <th scope="col">CPU Cores</th>
+                                    <th scope="col">OS</th>
+                                    <th scope="col">NBomber Version</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="n in nodes">
+                                    <td>{{ n.NodeId }}</td>
+                                    <td>{{ n.NodeInfo.NodeType }}</td>
+                                    <td>{{ n.AgentGroup }}</td>
+                                    <td>{{ n.NodeInfo.Processor }}</td>
+                                    <td>{{ n.NodeInfo.CoresCount }}</td>
+                                    <td>{{ n.NodeInfo.OS }}</td>
+                                    <td>{{ n.NodeInfo.NBomberVersion }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+        `
+    })
+    .mount("#app");
+</script>
+</body>
+</html>
